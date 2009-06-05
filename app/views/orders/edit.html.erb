@@ -1,0 +1,48 @@
+<% @body_id = 'cart' %>
+<h1><%= t("shopping_cart")%></h1>
+
+<% form_for(:order, :url => object_url, :html => { :method => :put, :id => 'updatecart' }) do |f| %>
+  <%= render :partial => 'form', :locals => {:f => f} %>
+  <% unless @order.line_items.empty? -%>
+  <div id="subtotal">
+    <h3><%= "#{t("subtotal")}: #{order_price(@order)}" %></h3><h3><%= "(Venda em Atacado)" if show_quantity >= 6 %></h3><br />
+ 
+    <div class="links">
+      <%= link_to image_tag('/images/update.png') + t("update"), '#', :class => 'button checkout primary', :onclick => "$('form#updatecart').submit(); return false;" %>
+      <%= link_to image_tag('/images/checkout.png') + t("checkout"), "#", :onclick => "$(pagseguro).submit()" , :class => 'button checkout primary' %>
+    </div>
+    
+    
+  </div>
+  <% end -%>
+
+  <p><%=link_to t("continue_shopping"), products_path, :class => 'button continue' %></p>
+  <% unless @order.line_items.empty? -%>
+  <p id="clear_cart_link">
+    <%= link_to t("empty_cart"), object_url, :method => :delete, :class => 'button empty'  %>
+  </p>
+  <% end -%>
+<% end -%>
+
+
+
+  <form name="pagseguro" target="pagseguro" method="post" action="https://pagseguro.uol.com.br/security/webpagamentos/webpagto.aspx">
+<input type="hidden" name="email_cobranca"
+value="SEU-EMAIL-DO-PAGSEGURO-AQUI">
+<input type="hidden" name="tipo" value="CP">
+<input type="hidden" name="moeda" value="BRL">
+<% q = 1 %>
+<% for p in @order.line_items -%>
+<input type="hidden" name="item_id_<%= q %>" value="<%= p.variant.sku %>">
+<input type="hidden" name="item_descr_<%= q %>" 
+value="<%= h(p.product.name) %>">
+<input type="hidden" name="item_quant_<%= q %>" value="<%= p.quantity %>">
+<% p.price = p.price - (p.price * 0.3) if show_quantity >= 6 %>
+<input type="hidden" name="item_valor_<%= q %>" value="<%= number_to_currency(p.price, :delimiter => "", :separator => "", :unit => "") %>">
+<input type="hidden" name="item_peso_<%= q %>" value="<% if p.variant.weight  %><%= number_with_precision(p.variant.weight * 1000, :precision => 0, :separator => "", :delimiter => "") %><% end %>">
+<% q += 1 %>
+<% end %>
+</form>
+
+
+
